@@ -1,0 +1,20 @@
+///////// Fonctions ///////////////
+// nombre max de fonctions
+2
+// nom de la fonction et nombre max de commandes de la fonction
+f1:4
+f2:2
+////////////// le robot ///////////////
+// coordonnées et direction du robot
+(3,3)
+haut
+// Etoiles
+(3,0)-(3,6)-(6,3)-(0,3)
+/////////////// Map ///////////////
+___r___
+___b___
+___b___
+rbbvbbr
+___b___
+___b___
+___r___
