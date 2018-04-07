@@ -68,7 +68,7 @@ let verifie (p:programme) (n:niveau) : unit =
   if not (case_valide n) then
     let x,y = n.robot.pos in
     let case = "(" ^ string_of_int x ^ "," ^ string_of_int y ^ ")" in
-    failwith ("Le robot se trouve dans une position invalide" ^ case)
+    failwith ("Le robot se trouve dans une position invalide " ^ case)
   else if not (List.for_all (case_valide_gen n) n.etoiles)
   then failwith "Une des etoiles est dans une position invalide"
   else

@@ -17,6 +17,9 @@ let hauteur_bas = ref 0
 (* nombre max d'instruction de la pile *)
 let pilemax = 15
 
+(* largeur d'une case de la pile *)
+let largeur_case = ref 0
+
 (* dimensions d'une case du niveau *)
 let case_x = ref 0
 let case_y = ref 0
@@ -35,10 +38,10 @@ let map_coord_to_graphics_coord (i,j) =
 
 let get_color (couleur:couleur) : Graphics.color =
   match couleur with
-  | Vert -> Graphics.green
-  | Rouge -> Graphics.red
-  | Bleu -> Graphics.blue
-  | Jaune -> Graphics.yellow
+  | Vert -> (* Graphics.green *) Graphics.rgb 92 214 92
+  | Rouge -> (* Graphics.red *) Graphics.rgb 255 51 0
+  | Bleu -> (* Graphics.blue *) Graphics.rgb 77 77 255
+  | Jaune -> (* Graphics.yellow *) Graphics.rgb 255 255 102
   | None -> Graphics.rgb 166 166 166 (* gris *)
 
 (* dessine la case de coordonnée c, avec la couleur passée en parametre *)
@@ -46,7 +49,7 @@ let dessine_case (c:int*int) (couleur:couleur) =
   Graphics.set_color (get_color couleur);
   let x,y = map_coord_to_graphics_coord c in
   Graphics.fill_rect x y !case_x !case_y;
-  Graphics.set_color (Graphics.rgb 140 140 140); (* gris fonce *)
+  Graphics.set_color (Graphics.rgb 128 128 128); (* gris fonce *)
   Graphics.draw_rect x y !case_x !case_y;
   Graphics.set_color Graphics.black
 
@@ -55,11 +58,25 @@ let decalage (x,y) (dx,dy) =
     
 (* dessin d'une etoile dans la case 'c' *)
 let dessine_etoile (c:int*int) =
-  (*let segments = Array.make 4 (0,0) in*)
-  let x,y = decalage (map_coord_to_graphics_coord c) (!case_x/2,!case_y/2) in
-  Graphics.set_color Graphics.magenta;
-  Graphics.fill_circle x y ((min !case_x !case_y)/2);
-  Graphics.set_color Graphics.black
+  let centre = decalage (map_coord_to_graphics_coord c) (!case_x/2,!case_y/2) in
+  let segments =
+    [|(0,2*(!case_y)/5);
+      (7*(!case_x)/75,19*(!case_y)/150);
+      (29*(!case_x)/75,19*(!case_y)/150);
+      (11*(!case_x)/75,-4*(!case_y)/75);
+      (6*(!case_x)/25,-49*(!case_y)/150);
+      (0,-4*(!case_y)/25);
+      (-6*(!case_x)/25,-49*(!case_y)/150);
+      (-11*(!case_x)/75,-4*(!case_y)/75);
+      (-29*(!case_x)/75,19*(!case_y)/150);
+      (-7*(!case_x)/75,19*(!case_y)/150)|] in
+  for i = 0 to (Array.length segments) - 1 do
+    segments.(i) <- decalage centre segments.(i)
+  done;
+  Graphics.set_color Graphics.yellow;
+  Graphics.fill_poly segments;
+  Graphics.set_color Graphics.black;
+  Graphics.draw_poly segments
 
 (* dessine le robot *)
 let dessine_robot (t:etat_robot) : unit =
@@ -90,7 +107,7 @@ let dessine_robot (t:etat_robot) : unit =
   for i=0 to (Array.length segments) -1 do
     segments.(i) <- (decalage (x,y) segments.(i))
   done;
-  Graphics.set_color (Graphics.rgb 140 140 140);
+  Graphics.set_color (Graphics.rgb 128 128 128);
   Graphics.fill_poly segments;
   Graphics.set_color Graphics.black
 
@@ -107,75 +124,70 @@ let dessine_niveau (map:niveau) : unit =
 (* fonction qui retourne les coordonnées du coin bas gauche
    d'une case de la pile, dans la fenetre graphique *)
 let coord_case (i:int) : (int*int) =
-  let largeur_case = (!largeur) / (pilemax + 3) in
   (* ajout de !hauteur_haut pour mettre la pile en haut d'ecran*)
-  (largeur_case * (i+1)),largeur_case + !hauteur_haut
+  (!largeur_case * (i+1)),!largeur_case + !hauteur_haut
 
 (* dessine la i-eme case de la pile *)
 let dessine_case_pile (col:Graphics.color) (i:int) : unit =
   Graphics.set_color col;
   let x,y = coord_case i in
-  let largeur_case = (!largeur) / (pilemax + 3) in
-  Graphics.fill_rect x y largeur_case !case_y;
+  Graphics.fill_rect x y !largeur_case !case_y;
   Graphics.set_color Graphics.black;
-  Graphics.draw_rect x y largeur_case !case_y
+  Graphics.draw_rect x y !largeur_case !case_y
 
 (* dessine la i-eme commande de la pile *)
 let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
   if (i < pilemax) then
     begin
       let x,y = coord_case i in
-      let largeur_case = (!largeur) / (pilemax + 3) in
       dessine_case_pile (get_color col) i;
+      Graphics.set_color Graphics.black;
       begin
 	match e with
 	| Programme.Avancer ->
 	   begin
-	     let x,y = decalage (x,y) (largeur_case/2,!case_y/5) in
-	     Graphics.set_color Graphics.black;
+	     let x,y = decalage (x,y) (!largeur_case/2,!case_y/5) in
 	     Graphics.moveto x y;
 	     Graphics.rlineto 0 (3*(!case_y)/5);
 	     let centre = Graphics.current_point () in
-	     let gauche = decalage centre (-(largeur_case/4),-(!case_y/5)) in
-	     let droite = decalage centre (largeur_case/4,-(!case_y/5)) in
+	     let gauche = decalage centre (-(!largeur_case/4),-(!case_y/5)) in
+	     let droite = decalage centre (!largeur_case/4,-(!case_y/5)) in
 	     Graphics.draw_poly_line [|gauche; centre; droite|]
 	   end
 	| Programme.RotGauche ->
 	   begin
-	     let x,y = decalage (x,y) (largeur_case/5,!case_y/5) in
+	     let x,y = decalage (x,y) (!largeur_case/5,!case_y/5) in
 	     let centre = decalage (x,y) (0,2*(!case_y)/5) in
-	     let bas = decalage centre (largeur_case/5,-(!case_y/5)) in
-	     let haut = decalage centre (largeur_case/5,!case_y/5) in
-	     Graphics.set_color Graphics.black;
+	     let bas = decalage centre (!largeur_case/5,-(!case_y/5)) in
+	     let haut = decalage centre (!largeur_case/5,!case_y/5) in
 	     Graphics.draw_poly_line [|bas; centre; haut|];
-	     Graphics.draw_arc x y (3*largeur_case/5) (2*(!case_y/5)) 0 90
+	     Graphics.draw_arc x y (3*(!largeur_case)/5) (2*(!case_y/5)) 0 90
 	   end
 	| Programme.RotDroite ->
 	   begin
-	     let x,y = decalage (x,y) (4*largeur_case/5,!case_y/5) in
+	     let x,y = decalage (x,y) (4*(!largeur_case)/5,!case_y/5) in
 	     let centre = decalage (x,y) (0,2*(!case_y)/5) in
-	     let bas = decalage centre (-(largeur_case/5),-(!case_y/5)) in
-	     let haut = decalage centre (-(largeur_case/5),!case_y/5) in
-	     Graphics.set_color Graphics.black;
+	     let bas = decalage centre (-(!largeur_case/5),-(!case_y/5)) in
+	     let haut = decalage centre (-(!largeur_case/5),!case_y/5) in
 	     Graphics.draw_poly_line [|bas; centre; haut|];
-	     Graphics.draw_arc x y (3*largeur_case/5) (2*(!case_y/5)) 90 180
+	     Graphics.draw_arc x y (3*(!largeur_case)/5) (2*(!case_y/5)) 90 180
 	   end
 	| Programme.Colorie col ->
 	   begin
 	     Graphics.set_color (get_color col);
-	     let x,y = decalage (x,y) (largeur_case/5,!case_y/5) in
-	     Graphics.fill_rect x y (3*largeur_case/5) (3*(!case_y)/5);
+	     let x,y = decalage (x,y) (!largeur_case/2,!case_y/2) in
+	     Graphics.fill_circle x y ((min !largeur_case !case_y)/2);
+	     Graphics.set_color Graphics.black;
+	     Graphics.draw_circle x y ((min !case_x !case_y)/2)
 	   end
 	| Programme.Appel fonct ->
 	   begin
-	     Graphics.set_color Graphics.black;
 	     Graphics.set_font "-*-fixed-medium-r-semicondensed--35-*-*-*-*-*-iso8859-1";
-	     let x,y = decalage (x,y) (largeur_case/5,!case_y/5) in
+	     let x,y = decalage (x,y) (!largeur_case/5,!case_y/5) in
 	     Graphics.moveto x y;
 	     Graphics.draw_string fonct
 	   end
-      end;
-      Graphics.set_color Graphics.black;
+      end
     end
 
 (* affichage de la pile dans la partie supérieure de l'écran *)
@@ -216,5 +228,6 @@ let init map (x,y) : unit =
   max_y := mm_y;
   largeur := x;
   hauteur := y;
+  largeur_case := (!largeur) / (pilemax + 3);
   hauteur_haut := 3*y/4;
   hauteur_bas := y/4
