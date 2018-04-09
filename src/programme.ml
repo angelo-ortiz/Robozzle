@@ -35,7 +35,7 @@ exception PileVide
 (* valeur initiale de la pile d'appel *)
 let pile_initiale (prog : programme) : sequence =
   let str,_ = List.hd prog in
-  (* quelle couleur ??? *)
+  (* le premier appel de fonction est toujours fait, i.e. transparent *)
   [None,Appel str]
 
 (* retourne la liste de commande associée à une fonction *)

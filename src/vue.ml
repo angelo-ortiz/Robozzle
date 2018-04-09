@@ -30,6 +30,10 @@ let max_x = ref 0
 let min_y = ref 0
 let max_y = ref 0
 
+(* tonalites de gris *)
+let gris_clair = Graphics.rgb 128 128 128
+let gris_fonce = Graphics.rgb 105 105 105
+
 (* fonction qui retourne les coordonnées du coin bas gauche
    d'une case de la grille, dans la fenetre graphique *)
 let map_coord_to_graphics_coord (i,j) =
@@ -42,19 +46,19 @@ let get_color (couleur:couleur) : Graphics.color =
   | Rouge -> (* Graphics.red *) Graphics.rgb 255 51 0
   | Bleu -> (* Graphics.blue *) Graphics.rgb 77 77 255
   | Jaune -> (* Graphics.yellow *) Graphics.rgb 255 255 102
-  | None -> Graphics.rgb 166 166 166 (* gris *)
+  | None -> (* Graphics.grey *) Graphics.rgb 166 166 166
 
 (* dessine la case de coordonnée c, avec la couleur passée en parametre *)
 let dessine_case (c:int*int) (couleur:couleur) =
   Graphics.set_color (get_color couleur);
   let x,y = map_coord_to_graphics_coord c in
   Graphics.fill_rect x y !case_x !case_y;
-  Graphics.set_color (Graphics.rgb 128 128 128); (* gris fonce *)
+  Graphics.set_color gris_fonce;
   Graphics.draw_rect x y !case_x !case_y;
   Graphics.set_color Graphics.black
 
 let decalage (x,y) (dx,dy) =
-  (x+dx,y+dy)
+ (x+dx,y+dy)
     
 (* dessin d'une etoile dans la case 'c' *)
 let dessine_etoile (c:int*int) =
@@ -75,8 +79,9 @@ let dessine_etoile (c:int*int) =
   done;
   Graphics.set_color Graphics.yellow;
   Graphics.fill_poly segments;
-  Graphics.set_color Graphics.black;
-  Graphics.draw_poly segments
+  Graphics.set_color gris_clair;
+  Graphics.draw_poly segments;
+  Graphics.set_color Graphics.black
 
 (* dessine le robot *)
 let dessine_robot (t:etat_robot) : unit =
@@ -107,8 +112,10 @@ let dessine_robot (t:etat_robot) : unit =
   for i=0 to (Array.length segments) -1 do
     segments.(i) <- (decalage (x,y) segments.(i))
   done;
-  Graphics.set_color (Graphics.rgb 128 128 128);
+  Graphics.set_color gris_clair;
   Graphics.fill_poly segments;
+  Graphics.set_color gris_fonce;
+  Graphics.draw_poly segments;
   Graphics.set_color Graphics.black
 
 (* dessine le terrain, les etoiles et le robot *)
@@ -200,11 +207,23 @@ let dessine_pile (pile:Programme.sequence) : unit =
 
 (* affiche la chaine "Defaite !" au centre de l'écran *)
 let perdu () : unit =
-  print_endline "Perdu :("
+  let x,y = (2*(!largeur)/7),(4*(!hauteur)/9) in
+  Graphics.set_color Graphics.yellow;
+  Graphics.fill_rect (x-2) y (3*x/2) (2*y/9);
+  Graphics.set_color Graphics.red;
+  Graphics.set_font "-*-fixed-medium-r-semicondensed--80-*-*-*-*-*-iso8859-1";
+  Graphics.moveto x y;
+  Graphics.draw_string "GAME OVER"
 
 (* affiche la chaine "Victoire ! " au centre de l'écran *)
 let gagne () : unit =
-  print_endline "Gagne :)"
+  let x,y = (5*(!largeur)/42),(4*(!hauteur)/9) in
+  Graphics.set_color (Graphics.rgb 245 222 179);
+  Graphics.fill_rect (x-9) y (32*x/5) (2*y/9);
+  Graphics.set_color (Graphics.rgb 60 179 113);
+  Graphics.set_font "-*-fixed-medium-r-semicondensed--80-*-*-*-*-*-iso8859-1";
+  Graphics.moveto x y;
+  Graphics.draw_string "CONGRATULATIONS!"
 
 (*******************************************************)
 (* Création et initialisation de l'interface graphique *)

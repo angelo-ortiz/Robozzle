@@ -4,34 +4,35 @@ open Niveau
 let loop (map:niveau) (pgm:programme) : unit =
   let rec loop_rec map pile =
     Vue.clear ();
-    let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
-    let map',pile' = une_etape pgm map pile in
-    Vue.dessine_pile pile';
-    Vue.dessine_niveau map';
+    Vue.dessine_pile pile;
+    Vue.dessine_niveau map;
     Graphics.synchronize ();
     try
-      verifie pgm map';
-      if est_fini map' then Vue.gagne ()
-      else loop_rec map' pile'
+      verifie pgm map;
+      if est_fini map then Vue.gagne ()
+      else
+	begin
+	  let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
+	  let map',pile' = une_etape pgm map pile in
+	  loop_rec map' pile'
+	end
     with
     |Failure error ->
        begin
 	 print_endline error;
-	 if est_fini map' then Vue.gagne ()
+	 if est_fini map then Vue.gagne ()
 	 else Vue.perdu ()
        end
     | PileVide ->
        begin
 	 print_endline "La pile d'instructions est vide";
-	 if est_fini map' then Vue.gagne ()
+	 if est_fini map then Vue.gagne ()
 	 else Vue.perdu ()
        end
   in
   let pile = pile_initiale pgm in
-  Vue.dessine_niveau map;
-  Vue.dessine_pile pile;
-  Graphics.synchronize ();
   loop_rec map pile;
+  Graphics.synchronize ();
   Graphics.loop_at_exit [Graphics.Key_pressed] (fun _ -> raise Exit)
 
 let _ =
