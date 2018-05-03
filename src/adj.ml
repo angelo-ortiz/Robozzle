@@ -1,19 +1,7 @@
-(* les listes d'adjascence : Elles sont triées *)
+(* les listes d'adjacence : Elles sont triées *)
 type 'a t = (int * 'a) list
 
 let empty = []
-
-let mem (cle:int) (liste : 'a t) : bool =
-  let rec loop l =
-    match l with
-    | [] -> false
-    | (x,_)::xs ->
-       begin
-	 if (x = cle) then true
-	 else if (x < cle) then loop xs
-	 else false
-       end
-  in loop liste
 
 let get (cle:int) (liste:'a t) : 'a =
   let rec loop l =
@@ -27,6 +15,12 @@ let get (cle:int) (liste:'a t) : 'a =
        end
   in loop liste
 
+let mem (cle:int) (liste : 'a t) : bool =
+  try
+    ignore (get cle liste);
+    true
+  with Not_found -> false
+
 let rec set (cle:int) (valeur:'a) (liste:'a t) : 'a t =
   match liste with
     | [] -> [cle,valeur]
@@ -38,7 +32,7 @@ let rec set (cle:int) (valeur:'a) (liste:'a t) : 'a t =
        end
 
 (*************************)
-(* matrices d'adjascence *)
+(* matrices d'adjacence *)
 (*************************)
 
 type 'a matrix = ('a t) t
@@ -47,10 +41,10 @@ let set_matrix ((i,j):int*int) (elm:'a) (matrice: 'a matrix) : 'a matrix =
   let rec loop m =
     match m with
     | [] -> set i (set j elm [] ) []
-    | (x,c)::xs ->
+    | (x,l)::xs ->
        begin
-	 if (x = i) then (x,set j elm c)::xs
-	 else if (x < i) then (x,c)::(loop xs)
+	 if (x = i) then (x,set j elm l)::xs
+	 else if (x < i) then (x,l)::(loop xs)
 	 else (i,set j elm [])::m
        end
   in (loop matrice)
@@ -60,7 +54,8 @@ let get_matrix ((i,j):int*int) (m:'a matrix) : 'a =
 
 let mem_matrix ((i,j):int*int) (m:'a matrix) : bool =
   try
-    mem j (get i m)
+    ignore (get_matrix (i,j) m);
+    true
   with Not_found -> false
 
 let bornes (m:'a matrix) : (int * int) * (int * int) =
@@ -71,18 +66,13 @@ let bornes (m:'a matrix) : (int * int) * (int * int) =
     | [x] -> x
     | x::xs -> tail xs
   in
-  let rec borne f p m acc =
-    match m with
-    | [] -> acc
-    | (i,c)::xs ->
-       begin
-	 let (j,l) = f c in
-	 if (p j acc) then borne f p xs j
-	 else borne f p xs acc
-       end
+  let update (j_min,j_max) (i,l) =
+    let (jh,_) = head l in
+    let (jt,_) = tail l in
+    (if (jh < j_min) then jh else j_min),
+    (if (jt > j_max) then jt else j_max)
   in
   let (i_min,_) = head m in
-  let j_min = borne (head) (<) m 99999 in
   let (i_max,_) = tail m in
-  let j_max = borne (tail) (>) m (-1) in
-  (i_min,j_min),(i_max,j_max)
+  let j_bornes = List.fold_left (update) (999999,-1) m in
+  (i_min,i_max),j_bornes

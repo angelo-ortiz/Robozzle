@@ -42,9 +42,9 @@ let avancer (robot : etat_robot) : etat_robot =
   let x,y = robot.pos in
   let pos' = 
     match robot.dir with
-    | Haut -> (x,y+1)
+    | Haut -> (x,y-1)
     | Gauche -> (x-1,y)
-    | Bas -> (x,y-1)
+    | Bas -> (x,y+1)
     | Droite -> (x+1,y)
   in {robot with pos = pos'}
 

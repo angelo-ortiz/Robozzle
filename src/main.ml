@@ -20,14 +20,12 @@ let loop (map:niveau) (pgm:programme) : unit =
     |Failure error ->
        begin
 	 print_endline error;
-	 if est_fini map then Vue.gagne ()
-	 else Vue.perdu ()
+	 Vue.perdu ()
        end
     | PileVide ->
        begin
 	 print_endline "La pile d'instructions est vide";
-	 if est_fini map then Vue.gagne ()
-	 else Vue.perdu ()
+	 Vue.perdu ()
        end
   in
   let pile = pile_initiale pgm in
@@ -55,6 +53,6 @@ let _ =
       let pgm = Parsing.parse_prog prog in
       let map = Parsing.parse_niveau niveau in
       Programme.verifie pgm map;
-      Vue.init map (800,800);
+      Vue.init map (800,1000);
       loop map pgm
     end
