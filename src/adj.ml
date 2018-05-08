@@ -7,13 +7,13 @@ let get (cle:int) (liste:'a t) : 'a =
   let rec loop l =
     match l with
     | [] -> raise Not_found
-    | (x,v)::xs ->
+    | (k,v)::xs ->
        begin
-	 if (x = cle) then v
-	 else if (x < cle) then loop xs
+	 if (k = cle) then v
+	 else if (k < cle) then loop xs
 	 else raise Not_found
        end
-  in loop liste
+  in (loop liste)
 
 let mem (cle:int) (liste : 'a t) : bool =
   try
@@ -24,10 +24,10 @@ let mem (cle:int) (liste : 'a t) : bool =
 let rec set (cle:int) (valeur:'a) (liste:'a t) : 'a t =
   match liste with
     | [] -> [cle,valeur]
-    | (x,v)::xs ->
+    | (k,v)::xs ->
        begin
-	 if (x = cle) then (cle,valeur)::xs
-	 else if (x < cle) then (x,v)::(set cle valeur xs)
+	 if (k = cle) then (cle,valeur)::xs
+	 else if (k < cle) then (k,v)::(set cle valeur xs)
 	 else (cle,valeur)::liste
        end
 

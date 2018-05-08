@@ -164,29 +164,32 @@ let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
 	   end
 	| Programme.RotGauche ->
 	   begin
-	     let x,y = decalage (x,y) (!largeur_case/5,!hauteur_case/5) in
-	     let centre = decalage (x,y) (0,2*(!hauteur_case)/5) in
+	     (* centre de l'arc*)
+	     let xc,yc = decalage (x,y) (!largeur_case/5,!hauteur_case/5) in
+	     let centre = decalage (xc,yc) (0,2*(!hauteur_case)/5) in
 	     let bas = decalage centre (!largeur_case/5,-(!hauteur_case/5)) in
 	     let haut = decalage centre (!largeur_case/5,!hauteur_case/5) in
 	     Graphics.draw_poly_line [|bas; centre; haut|];
-	     Graphics.draw_arc x y (3*(!largeur_case)/5) (2*(!hauteur_case/5)) 0 90
+	     Graphics.draw_arc xc yc (3*(!largeur_case)/5) (2*(!hauteur_case/5)) 0 90
 	   end
 	| Programme.RotDroite ->
 	   begin
-	     let x,y = decalage (x,y) (4*(!largeur_case)/5,!hauteur_case/5) in
-	     let centre = decalage (x,y) (0,2*(!hauteur_case)/5) in
+	     (* centre de l'arc*)
+	     let xc,yc = decalage (x,y) (4*(!largeur_case)/5,!hauteur_case/5) in
+	     let centre = decalage (xc,yc) (0,2*(!hauteur_case)/5) in
 	     let bas = decalage centre (-(!largeur_case/5),-(!hauteur_case/5)) in
 	     let haut = decalage centre (-(!largeur_case/5),!hauteur_case/5) in
 	     Graphics.draw_poly_line [|bas; centre; haut|];
-	     Graphics.draw_arc x y (3*(!largeur_case)/5) (2*(!hauteur_case/5)) 90 180
+	     Graphics.draw_arc xc yc (3*(!largeur_case)/5) (2*(!hauteur_case/5)) 90 180
 	   end
 	| Programme.Colorie col ->
 	   begin
 	     Graphics.set_color (get_color col);
-	     let x,y = decalage (x,y) (!largeur_case/2,!hauteur_case/2) in
-	     Graphics.fill_circle x y ((min !largeur_case !hauteur_case)/2);
+	     (* centre du cercle *)
+	     let xc,yc = decalage (x,y) (!largeur_case/2,!hauteur_case/2) in
+	     Graphics.fill_circle xc yc ((min !largeur_case !hauteur_case)/2);
 	     Graphics.set_color Graphics.black;
-	     Graphics.draw_circle x y ((min !case_x !hauteur_case)/2)
+	     Graphics.draw_circle xc yc ((min !case_x !hauteur_case)/2)
 	   end
 	| Programme.Appel fonct ->
 	   begin
@@ -219,9 +222,9 @@ let perdu () : unit =
 (* affiche la chaine "Victoire ! " au centre de l'écran *)
 let gagne () : unit =
   let x,y = (5*(!largeur)/42),(4*(!hauteur)/9) in
-  Graphics.set_color (Graphics.rgb 245 222 179);
+  Graphics.set_color (Graphics.rgb 245 222 179); (* beige *)
   Graphics.fill_rect (x-9) y (32*x/5) (2*y/9);
-  Graphics.set_color (Graphics.rgb 60 179 113);
+  Graphics.set_color (Graphics.rgb 60 179 113); (* mint green *)
   Graphics.set_font "-*-fixed-medium-r-semicondensed--80-*-*-*-*-*-iso8859-1";
   Graphics.moveto x y;
   Graphics.draw_string "CONGRATULATIONS!"
@@ -246,7 +249,7 @@ let init map (x,y) : unit =
   max_y := mm_y;
   largeur := x;
   hauteur := y;
-  hauteur_haut := y/4;
+  hauteur_haut := 25*y/100;
   hauteur_bas := !hauteur - !hauteur_haut;
   largeur_case := (!largeur) / (pilemax + 3);
   hauteur_case := (!hauteur_haut) / 3;

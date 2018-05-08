@@ -39,11 +39,11 @@ let pile_initiale (prog : programme) : sequence =
   [None,Appel str]
 
 (* retourne la liste de commande associée à une fonction *)
-let trouve_fonction (s : string) (prog : programme) =
+let trouve_fonction (s : string) (prog : programme) : sequence =
   List.assoc s prog
 
-(* verifie si la partie est terminé *)
-let est_fini etat =
+(* verifie si la partie est terminée *)
+let est_fini (etat:niveau) : bool =
   etat.etoiles = []
 
 (* effectue une seule etape d'un programme *)
@@ -53,7 +53,7 @@ let une_etape (prog:programme) (etat:niveau) (pile:sequence) : niveau * sequence
   | (col,act)::xs ->
      begin
        let etat = enleve_etoile etat in
-       if col = None || col = Adj.get_matrix (etat.robot.pos) etat.grille then
+       if col = None || col = Adj.get_matrix etat.robot.pos etat.grille then
 	 match act with
 	 | Avancer -> robot_avancer etat,xs
 	 | RotGauche -> robot_gauche etat,xs
@@ -63,11 +63,15 @@ let une_etape (prog:programme) (etat:niveau) (pile:sequence) : niveau * sequence
        else etat,xs
      end
 
+let conversion_ordonnee (y:int) (n:niveau) : int =
+  let _,(_,ymax) = Adj.bornes n.grille in
+  ymax - y
+       
 (* verifie qu'un niveau est valide et qu'un programme lui est conforme *)
 let verifie (p:programme) (n:niveau) : unit =
   if not (case_valide n) then
     let x,y = n.robot.pos in
-    let case = "(" ^ string_of_int x ^ "," ^ string_of_int y ^ ")" in
+    let case = "(" ^ string_of_int x ^ "," ^ string_of_int (conversion_ordonnee y n) ^ ")" in
     failwith ("Le robot se trouve dans une position invalide " ^ case)
   else if not (List.for_all (case_valide_gen n) n.etoiles)
   then failwith "Une des etoiles est dans une position invalide"
@@ -79,9 +83,9 @@ let verifie (p:programme) (n:niveau) : unit =
 	| (str,seq)::xs ->
 	   try
 	     let nb_max = List.assoc str n.fonctions in
-	     if nb_max < List.length seq then
-	       failwith "Une fonction dans le programme a une taille plus grande que ce qui est autorise par le niveau"
+	     if List.length seq > nb_max then
+	       failwith ("La fonction " ^ str ^ " a une taille plus grande que ce qui est autorise par le niveau")
 	   with Not_found ->
-	     failwith "Une fonction dans le programme n'a pas de nom autorise par le niveau"
+	     failwith ("Le nom de fonction " ^ str ^ " n'est pas autorise par le niveau")
       in loop p
     end

@@ -75,14 +75,14 @@ let robot_droite (etat : niveau) : niveau =
   let robot = {etat.robot with dir = rot_droite etat.robot.dir} in
   {etat with robot}
 
-let robot_colorie (couleur:couleur) (etat: niveau) : niveau =
+let robot_colorie (couleur : couleur) (etat: niveau) : niveau =
   {etat with grille = Adj.set_matrix etat.robot.pos couleur etat.grille}
 
-let enleve_etoile etat : niveau =
+let enleve_etoile (etat : niveau) : niveau =
   let etoiles = List.fold_left (fun acc x ->
     if x = etat.robot.pos then acc
-    else x::acc) [] etat.etoiles in
-  {etat with etoiles}
+    else x::acc) [] etat.etoiles
+  in {etat with etoiles}
 
 let test_couleur (co : couleur) (etat : niveau) : bool =
   match co with
