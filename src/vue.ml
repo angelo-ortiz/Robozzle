@@ -187,9 +187,9 @@ let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
 	     Graphics.set_color (get_color col);
 	     (* centre du cercle *)
 	     let xc,yc = decalage (x,y) (!largeur_case/2,!hauteur_case/2) in
-	     Graphics.fill_circle xc yc ((min !largeur_case !hauteur_case)/2);
+	     Graphics.fill_circle xc yc ((min !largeur_case !hauteur_case)/4);
 	     Graphics.set_color Graphics.black;
-	     Graphics.draw_circle xc yc ((min !case_x !hauteur_case)/2)
+	     Graphics.draw_circle xc yc ((min !largeur_case !hauteur_case)/4)
 	   end
 	| Programme.Appel fonct ->
 	   begin

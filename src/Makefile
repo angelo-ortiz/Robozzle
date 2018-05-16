@@ -1,6 +1,6 @@
 EXEC = robozzle
 all:
-	ocamlc -o $(EXEC) unix.cma str.cma graphics.cma adj.ml niveau.ml programme.ml vue.ml parsing.ml main.ml
+	ocamlc -o $(EXEC) unix.cma str.cma graphics.cma adj.ml niveau.ml programme.ml vue.ml tools.ml parsing.ml main.ml
 
 run: all
 	./$(EXEC)

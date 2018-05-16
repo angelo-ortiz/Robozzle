@@ -26,13 +26,6 @@ let split_on_char sep s =
 
 let parse_prog fichier : Programme.programme =
   let ic = open_in fichier in
-  let lit_instruction str =
-    match String.trim str with
-    | "->" -> Avancer
-    | "-v" -> RotDroite
-    | "-^" -> RotGauche
-    | s -> Appel s
-  in
   let lit_couleur str =
     match String.trim str with
     | "R" -> Rouge
@@ -40,6 +33,18 @@ let parse_prog fichier : Programme.programme =
     | "J" -> Jaune
     | "V" -> Vert
     | s   -> failwith ("couleur non reconnue : "^s)
+  in
+  let lit_instruction str =
+    match String.trim str with
+    | "->" -> Avancer
+    | "-v" -> RotDroite
+    | "-^" -> RotGauche
+    | s ->
+       begin
+	 match Tools.explode s with
+	 | 'c'::' '::col -> Colorie (lit_couleur (Tools.implode col))
+	 | _ -> Appel s
+       end
   in
   let lit_commande str : commande =
     match split_on_char ':' str with
