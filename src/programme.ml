@@ -46,33 +46,38 @@ let trouve_fonction (s : string) (prog : programme) : sequence =
 let est_fini (etat:niveau) : bool =
   etat.etoiles = []
 
+let conversion_ordonnee (y:int) (n:niveau) : int =
+  let _,(_,ymax) = Adj.bornes n.grille in
+  ymax - y
+       
 (* effectue une seule etape d'un programme *)
-let une_etape (prog:programme) (etat:niveau) (pile:sequence) : niveau * sequence =
+let une_etape (prog:programme) (etat:niveau) (pile:sequence) (n:int) : niveau * sequence * int =
   match pile with
   | [] -> raise PileVide
   | (col,act)::xs ->
      begin
        let etat = enleve_etoile etat in
+       let n = n + 1 in
        if col = None || col = Adj.get_matrix etat.robot.pos etat.grille then
 	 match act with
-	 | Avancer -> robot_avancer etat,xs
-	 | RotGauche -> robot_gauche etat,xs
-	 | RotDroite -> robot_droite etat,xs
-	 | Colorie c -> robot_colorie c etat,xs
-	 | Appel f -> etat,(trouve_fonction f prog)@xs
-       else etat,xs
+	 | Avancer ->
+	    begin
+	      let etat = robot_avancer etat in
+	      if not (case_valide etat) then
+		raise Tomber
+	      else etat,xs,n
+	    end
+	 | RotGauche -> robot_gauche etat,xs,n
+	 | RotDroite -> robot_droite etat,xs,n
+	 | Colorie c -> robot_colorie c etat,xs,n
+	 | Appel f -> etat,(trouve_fonction f prog)@xs,n
+       else etat,xs,n
      end
 
-let conversion_ordonnee (y:int) (n:niveau) : int =
-  let _,(_,ymax) = Adj.bornes n.grille in
-  ymax - y
-       
 (* verifie qu'un niveau est valide et qu'un programme lui est conforme *)
 let verifie (p:programme) (n:niveau) : unit =
   if not (case_valide n) then
-    let x,y = n.robot.pos in
-    let case = "(" ^ string_of_int x ^ "," ^ string_of_int (conversion_ordonnee y n) ^ ")" in
-    failwith ("Le robot se trouve dans une position invalide " ^ case)
+    raise Tomber
   else if not (List.for_all (case_valide_gen n) n.etoiles)
   then failwith "Une des etoiles est dans une position invalide"
   else

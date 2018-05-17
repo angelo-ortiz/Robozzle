@@ -74,5 +74,5 @@ let bornes (m:'a matrix) : (int * int) * (int * int) =
   in
   let (i_min,_) = head m in
   let (i_max,_) = tail m in
-  let j_bornes = List.fold_left (update) (999999,-1) m in
+  let j_bornes = List.fold_left (update) (max_int,-1) m in
   (i_min,i_max),j_bornes

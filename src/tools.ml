@@ -1,9 +1,11 @@
+(* Fonction qui convertit une chaîne en liste de caractères *)
 let explode (s:string) : char list =
   let rec loop i l =
     if i < 0 then l
     else loop (i - 1) (s.[i] :: l)
   in loop (String.length s - 1) []
 
+(* Fonction qui convertit une liste de caractères en chaîne *)
 let implode (l:char list) : string =
   let res = Bytes.create (List.length l) in
   let rec loop i l =

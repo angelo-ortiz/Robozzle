@@ -1,25 +1,64 @@
 open Programme
 open Niveau
 
+(* x is in milliseconds *)       
+let sleep x =
+  let x = (float_of_int x) /. 1000. in
+  let x = string_of_float x in
+  ignore (Unix.system ("sleep "^x))
+
 let loop (map:niveau) (pgm:programme) : unit =
-  let rec loop_rec map pile =
+  let key_treatment (b: bool option) : bool option =
+    match b with
+    (* None : il faut exécuter tous les pas *)
+    | None ->
+       begin
+	 sleep 50;
+	 None
+       end
+    (* Some | true : il faut faire un seul pas *)
+    (*      | false : touche incorrecte => pas d'action à faire *)
+    | Some _ ->
+       begin
+    	 let status = Graphics.wait_next_event [Graphics.Key_pressed] in
+	 if status.Graphics.key = 'e' then raise Exit
+	 else if status.Graphics.key = 'a' then None
+	 else Some (status.Graphics.key = 's')
+       end			       
+  in
+  let rec loop_rec map pile b n =
     Vue.clear ();
     Vue.dessine_pile pile;
-    Vue.dessine_niveau map;
+    Vue.dessine_niveau map n;
     Graphics.synchronize ();
-    try
-      verifie pgm map;
-      if est_fini map then Vue.gagne ()
+    if est_fini map then Vue.gagne ()
       else
 	begin
-	  let _ = Graphics.wait_next_event [Graphics.Key_pressed] in
-	  let map',pile' = une_etape pgm map pile in
-	  loop_rec map' pile'
+	  let b = key_treatment b in
+	  match b with
+	  | Some false -> loop_rec map pile b n
+	  | _ ->
+	     begin
+	       let map',pile',n' = une_etape pgm map pile n in
+	       loop_rec map' pile' b n'
+	     end
 	end
+  in
+  let pile = pile_initiale pgm in
+  begin
+    try 
+      verifie pgm map;
+      loop_rec map pile (Some false) 0;
+      Graphics.synchronize ();
     with
-    |Failure error ->
+    | Failure error ->
        begin
 	 print_endline error;
+	 Vue.perdu ()
+       end
+    | Tomber ->
+       begin
+	 print_endline "Le robot se trouve dans une position invalide";
 	 Vue.perdu ()
        end
     | PileVide ->
@@ -27,12 +66,10 @@ let loop (map:niveau) (pgm:programme) : unit =
 	 print_endline "La pile d'instructions est vide";
 	 Vue.perdu ()
        end
-  in
-  let pile = pile_initiale pgm in
-  loop_rec map pile;
-  Graphics.synchronize ();
+  end;
   Graphics.loop_at_exit [Graphics.Key_pressed] (fun _ -> raise Exit)
 
+			
 let _ =
   (* utilitaire pour vérifier qu'une string est suffixe d'une autre *)
   let string_ends_with string suffix =

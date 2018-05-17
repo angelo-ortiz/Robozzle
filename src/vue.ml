@@ -119,8 +119,38 @@ let dessine_robot (t:etat_robot) : unit =
   Graphics.draw_poly segments;
   Graphics.set_color Graphics.black
 
+let dessine_chaine (taille:int) (text:string) (supp:string option) (x,y:int * int) : unit =
+  Graphics.set_font ("-*-fixed-medium-r-semicondensed--" ^ (string_of_int taille) ^ "-*-*-*-*-*-iso8859-1");
+  Graphics.moveto x y;
+  let chaine =
+    begin
+      match supp with
+    | None -> text
+    | Some str -> text ^ " : " ^ str
+    end
+  in Graphics.draw_string chaine
+
+let position_message (dx:int) (dy:int) : int * int =
+  (dx * (!largeur_case)),(!hauteur - dy*(!hauteur_case/2))
+			  
+let dessine_etapes (n:int) : unit =
+  let bg = Graphics.background in
+  Graphics.set_color bg;
+  dessine_chaine 20 "Nombre d'etapes" (Some (string_of_int n)) (position_message 13 2);
+  Graphics.set_color Graphics.black
+
+let dessine_instructions () : unit =
+  let bg = Graphics.background in
+  Graphics.set_color bg;
+  dessine_chaine 20 "Un pas" (Some "'s'") (position_message 1 1);
+  dessine_chaine 20 "Tous les pas" (Some "'a'") (position_message 7 1);
+  dessine_chaine 20 "Sortir" (Some "'e'") (position_message 14 1);
+  Graphics.set_color Graphics.black
+		     
 (* dessine le terrain, les etoiles et le robot *)
-let dessine_niveau (map:niveau) : unit =
+let dessine_niveau (map:niveau) (n:int) : unit =
+  dessine_instructions ();
+  dessine_etapes n;
   List.iter (fun (i,l) -> List.iter (fun (j,c) -> dessine_case (i,j) c) l) map.grille;
   List.iter (dessine_etoile) map.etoiles;
   dessine_robot map.robot
@@ -215,9 +245,7 @@ let perdu () : unit =
   Graphics.set_color Graphics.yellow;
   Graphics.fill_rect (x-2) y (3*x/2) (2*y/9);
   Graphics.set_color Graphics.red;
-  Graphics.set_font "-*-fixed-medium-r-semicondensed--80-*-*-*-*-*-iso8859-1";
-  Graphics.moveto x y;
-  Graphics.draw_string "GAME OVER"
+  dessine_chaine 80 "GAME OVER" None (x,y)
 
 (* affiche la chaine "Victoire ! " au centre de l'écran *)
 let gagne () : unit =
@@ -225,9 +253,7 @@ let gagne () : unit =
   Graphics.set_color (Graphics.rgb 245 222 179); (* beige *)
   Graphics.fill_rect (x-9) y (32*x/5) (2*y/9);
   Graphics.set_color (Graphics.rgb 60 179 113); (* mint green *)
-  Graphics.set_font "-*-fixed-medium-r-semicondensed--80-*-*-*-*-*-iso8859-1";
-  Graphics.moveto x y;
-  Graphics.draw_string "CONGRATULATIONS!"
+  dessine_chaine 80 "CONGRATULATIONS!" None (x,y)
 
 (*******************************************************)
 (* Création et initialisation de l'interface graphique *)
@@ -235,7 +261,10 @@ let gagne () : unit =
 
 (* efface l'écran *)
 let clear () : unit =
-  Graphics.clear_graph ()
+  let fg = Graphics.foreground in
+  Graphics.clear_graph ();
+  Graphics.set_color fg;
+  Graphics.fill_rect 0 0 !largeur !hauteur
 
 (* initialisation *)
 let init map (x,y) : unit =
