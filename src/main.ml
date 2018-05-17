@@ -49,7 +49,6 @@ let loop (map:niveau) (pgm:programme) : unit =
     try 
       verifie pgm map;
       loop_rec map pile (Some false) 0;
-      Graphics.synchronize ();
     with
     | Failure error ->
        begin
@@ -67,6 +66,7 @@ let loop (map:niveau) (pgm:programme) : unit =
 	 Vue.perdu ()
        end
   end;
+  Graphics.synchronize ();
   Graphics.loop_at_exit [Graphics.Key_pressed] (fun _ -> raise Exit)
 
 			

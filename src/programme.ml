@@ -46,34 +46,33 @@ let trouve_fonction (s : string) (prog : programme) : sequence =
 let est_fini (etat:niveau) : bool =
   etat.etoiles = []
 
+(* calcule l'ordonnée pour la grille inversée *)
 let conversion_ordonnee (y:int) (n:niveau) : int =
   let _,(_,ymax) = Adj.bornes n.grille in
   ymax - y
        
 (* effectue une seule etape d'un programme *)
 let une_etape (prog:programme) (etat:niveau) (pile:sequence) (n:int) : niveau * sequence * int =
-  match pile with
-  | [] -> raise PileVide
-  | (col,act)::xs ->
-     begin
-       let etat = enleve_etoile etat in
-       let n = n + 1 in
-       if col = None || col = Adj.get_matrix etat.robot.pos etat.grille then
-	 match act with
-	 | Avancer ->
-	    begin
-	      let etat = robot_avancer etat in
-	      if not (case_valide etat) then
-		raise Tomber
-	      else etat,xs,n
-	    end
-	 | RotGauche -> robot_gauche etat,xs,n
-	 | RotDroite -> robot_droite etat,xs,n
-	 | Colorie c -> robot_colorie c etat,xs,n
-	 | Appel f -> etat,(trouve_fonction f prog)@xs,n
-       else etat,xs,n
-     end
-
+  if not (case_valide etat) then
+    raise Tomber
+  else
+    begin
+      match pile with
+      | [] -> raise PileVide
+      | (color,action)::suite ->
+	 begin
+	   let n = n + 1 in
+	   if color = None || color = Adj.get_matrix etat.robot.pos etat.grille then
+	     match action with
+	     | Avancer -> (enleve_etoile (robot_avancer etat)),suite,n
+	     | RotGauche -> robot_gauche etat,suite,n
+	     | RotDroite -> robot_droite etat,suite,n
+	     | Colorie c -> (robot_colorie c etat),suite,n
+	     | Appel f -> etat,(trouve_fonction f prog)@suite,n
+	   else etat,suite,n
+	 end
+    end
+	   
 (* verifie qu'un niveau est valide et qu'un programme lui est conforme *)
 let verifie (p:programme) (n:niveau) : unit =
   if not (case_valide n) then
@@ -82,15 +81,12 @@ let verifie (p:programme) (n:niveau) : unit =
   then failwith "Une des etoiles est dans une position invalide"
   else
     begin
-      let rec loop l =
-	match l with
-	| [] -> ()
-	| (str,seq)::xs ->
-	   try
-	     let nb_max = List.assoc str n.fonctions in
-	     if List.length seq > nb_max then
-	       failwith ("La fonction " ^ str ^ " a une taille plus grande que ce qui est autorise par le niveau")
-	   with Not_found ->
-	     failwith ("Le nom de fonction " ^ str ^ " n'est pas autorise par le niveau")
-      in loop p
+      let verifie_fonction (str,seq) =
+      	try
+      	  let nb_max = List.assoc str n.fonctions in
+      	  if List.length seq > nb_max then
+      	    failwith ("La fonction " ^ str ^ " a une taille plus grande que ce qui est autorise par le niveau")
+      	with Not_found ->
+      	  failwith ("Le nom de fonction " ^ str ^ " n'est pas autorise par le niveau")
+      in List.iter (verifie_fonction) p 
     end

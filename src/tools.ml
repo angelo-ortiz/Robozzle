@@ -13,3 +13,7 @@ let implode (l:char list) : string =
     | [] -> res
     | c :: l -> Bytes.set res i c; loop (i + 1) l
   in loop 0 l
+
+(* calcule le point obtenu à l'issue du décalage d'un point de base *)
+let decalage (x,y) (dx,dy) =
+  (x+dx,y+dy)

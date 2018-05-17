@@ -31,7 +31,12 @@ let max_x = ref 0
 let min_y = ref 0
 let max_y = ref 0
 
-(* tonalites de gris *)
+(* taille de la police pour les diverses chaînes à afficher à l'écran *)
+let taille_message = ref 0
+let taille_instr = ref 0
+let taille_fonct = ref 0
+
+(* tonalités de gris *)
 let gris_clair = Graphics.rgb 128 128 128
 let gris_fonce = Graphics.rgb 105 105 105
 
@@ -41,6 +46,7 @@ let map_coord_to_graphics_coord (i,j) =
   (!case_x + ((i-(!min_x)) * !case_x)),
   (!hauteur_bas - (2*(!case_y) + (((* (!max_y)- *)j) * !case_y)))
 
+(* fonction qui retourne une tonalité personnalisée de la couleur passée en argument*)
 let get_color (couleur:couleur) : Graphics.color =
   match couleur with
   | Vert -> (* Graphics.green *) Graphics.rgb 92 214 92
@@ -49,103 +55,105 @@ let get_color (couleur:couleur) : Graphics.color =
   | Jaune -> (* Graphics.yellow *) Graphics.rgb 255 255 102
   | None -> (* Graphics.grey *) Graphics.rgb 166 166 166
 
-(* dessine la case de coordonnée c, avec la couleur passée en parametre *)
-let dessine_case (c:int*int) (couleur:couleur) =
-  Graphics.set_color (get_color couleur);
-  let x,y = map_coord_to_graphics_coord c in
-  Graphics.fill_rect x y !case_x !case_y;
-  Graphics.set_color gris_fonce;
-  Graphics.draw_rect x y !case_x !case_y;
-  Graphics.set_color Graphics.black
-
-let decalage (x,y) (dx,dy) =
- (x+dx,y+dy)
+(* dessine un rectangle avec une couleur de fond et des bordures, et des coordonnées données *)
+let dessine_rectangle (fond:Graphics.color) (bordure:Graphics.color) (x,y:int*int) (dx,dy:int*int) : unit =
+  Graphics.set_color fond;
+  Graphics.fill_rect x y dx dy;
+  Graphics.set_color bordure;
+  Graphics.draw_rect x y dx dy;
+  Graphics.set_color Graphics.black    
     
-(* dessin d'une etoile dans la case 'c' *)
-let dessine_etoile (c:int*int) =
-  let centre = decalage (map_coord_to_graphics_coord c) (!case_x/2,!case_y/2) in
-  let segments =
-    [|(0,2*(!case_y)/5);
-      (7*(!case_x)/75,19*(!case_y)/150);
-      (29*(!case_x)/75,19*(!case_y)/150);
-      (11*(!case_x)/75,-4*(!case_y)/75);
-      (6*(!case_x)/25,-49*(!case_y)/150);
-      (0,-4*(!case_y)/25);
-      (-6*(!case_x)/25,-49*(!case_y)/150);
-      (-11*(!case_x)/75,-4*(!case_y)/75);
-      (-29*(!case_x)/75,19*(!case_y)/150);
-      (-7*(!case_x)/75,19*(!case_y)/150)|] in
-  for i = 0 to (Array.length segments) - 1 do
-    segments.(i) <- decalage centre segments.(i)
+(* dessine la case de coordonnée <c>, avec la couleur passée en parametre *)
+let dessine_case (c:int*int) (couleur:couleur) =
+  dessine_rectangle (get_color couleur) gris_fonce (map_coord_to_graphics_coord c) (!case_x,!case_y)
+
+(* dessine un polygone avec une couleur de fond et des bordures, et des sommets de base donnés, avec le coin inférieur gauche de la case comme référence *)
+let dessine_polygone (fond:Graphics.color) (bordure:Graphics.color) (refer:int*int) (sommets_base:(int*int) array) : unit =
+  for i = 0 to (Array.length sommets_base) - 1 do
+    sommets_base.(i) <- Tools.decalage refer sommets_base.(i)
   done;
-  Graphics.set_color Graphics.yellow;
-  Graphics.fill_poly segments;
-  Graphics.set_color gris_clair;
-  Graphics.draw_poly segments;
+  Graphics.set_color fond;
+  Graphics.fill_poly sommets_base;
+  Graphics.set_color bordure;
+  Graphics.draw_poly sommets_base;
   Graphics.set_color Graphics.black
 
+(* fonction qui calcule les sommets d'une étoile *)
+let sommets_etoile () : (int*int) array = 
+  [|(0,2*(!case_y)/5);
+    (7*(!case_x)/75,19*(!case_y)/150);
+    (29*(!case_x)/75,19*(!case_y)/150);
+    (11*(!case_x)/75,-4*(!case_y)/75);
+    (6*(!case_x)/25,-49*(!case_y)/150);
+    (0,-4*(!case_y)/25);
+    (-6*(!case_x)/25,-49*(!case_y)/150);
+    (-11*(!case_x)/75,-4*(!case_y)/75);
+    (-29*(!case_x)/75,19*(!case_y)/150);
+    (-7*(!case_x)/75,19*(!case_y)/150)|]
+
+(* dessin d'une etoile dans la case <c> *)
+let dessine_etoile (c:int*int) =
+  dessine_polygone Graphics.yellow gris_clair (Tools.decalage (map_coord_to_graphics_coord c) (!case_x/2,!case_y/2)) (sommets_etoile ())
+
+(* calcule les sommets du robot selon son orientation *)
+let sommets_robot (dir:orientation) : (int*int) array =
+  match dir with
+  | Haut ->
+     [|(!case_x/2, 4*(!case_y)/5);
+       (3*(!case_x)/4, !case_y/5);
+       (!case_x/2, 2*(!case_y)/5);
+       (!case_x/4, !case_y/5)|]
+  | Bas ->
+     [|(!case_x/2, !case_y/5);
+       (3*(!case_x)/4, 4*(!case_y)/5);
+       (!case_x/2, 3*(!case_y)/5);
+       (!case_x/4, 4*(!case_y)/5)|]
+  | Gauche ->
+     [|(!case_x/5, !case_y/2);
+       (4*(!case_x)/5, 3*(!case_y)/4);
+       (3*(!case_x)/5, !case_y/2);
+       (4*(!case_x)/5, !case_y/4)|]
+  | Droite ->
+     [|(4*(!case_x)/5, !case_y/2);
+       (!case_x/5, 3*(!case_y)/4);
+       (2*(!case_x)/5, !case_y/2);
+       (!case_x/5, !case_y/4)|]
+       
 (* dessine le robot *)
 let dessine_robot (t:etat_robot) : unit =
-  let x,y = map_coord_to_graphics_coord t.pos in
-  let segments =
-    match t.dir with
-    | Haut ->
-       [|(!case_x/2, 4*(!case_y)/5);
-	 (3*(!case_x)/4, !case_y/5);
-	 (!case_x/2, 2*(!case_y)/5);
-	 (!case_x/4, !case_y/5)|]
-    | Bas ->
-       [|(!case_x/2, !case_y/5);
-	 (3*(!case_x)/4, 4*(!case_y)/5);
-	 (!case_x/2, 3*(!case_y)/5);
-	 (!case_x/4, 4*(!case_y)/5)|]
-    | Gauche ->
-       [|(!case_x/5, !case_y/2);
-	 (4*(!case_x)/5, 3*(!case_y)/4);
-	 (3*(!case_x)/5, !case_y/2);
-	 (4*(!case_x)/5, !case_y/4)|]
-    | Droite ->
-       [|(4*(!case_x)/5, !case_y/2);
-	 (!case_x/5, 3*(!case_y)/4);
-	 (2*(!case_x)/5, !case_y/2);
-	 (!case_x/5, !case_y/4)|]
-  in
-  for i=0 to (Array.length segments) -1 do
-    segments.(i) <- (decalage (x,y) segments.(i))
-  done;
-  Graphics.set_color gris_clair;
-  Graphics.fill_poly segments;
-  Graphics.set_color gris_fonce;
-  Graphics.draw_poly segments;
-  Graphics.set_color Graphics.black
+  dessine_polygone gris_clair gris_fonce (map_coord_to_graphics_coord t.pos) (sommets_robot t.dir)
 
-let dessine_chaine (taille:int) (text:string) (supp:string option) (x,y:int * int) : unit =
-  Graphics.set_font ("-*-fixed-medium-r-semicondensed--" ^ (string_of_int taille) ^ "-*-*-*-*-*-iso8859-1");
+(* définit une police de caractères avec une taille donnée *)
+let set_font (taille:int) : unit =
+  Graphics.set_font ("-*-fixed-medium-r-semicondensed--" ^ (string_of_int taille) ^ "-*-*-*-*-*-iso8859-1")
+
+(* dessine une chaîne de caractères avec une couleur et une position données *)
+let dessine_chaine (color:Graphics.color) (taille:int) (text:string) (supp:string option) (x,y:int * int) : unit =
+  set_font taille;
   Graphics.moveto x y;
+  Graphics.set_color color;
   let chaine =
     begin
       match supp with
     | None -> text
     | Some str -> text ^ " : " ^ str
     end
-  in Graphics.draw_string chaine
+  in Graphics.draw_string chaine;
+  Graphics.set_color Graphics.black
 
+(* définit la position d'un message à afficher dans la partie supérieure de la fênetre *)
 let position_message (dx:int) (dy:int) : int * int =
   (dx * (!largeur_case)),(!hauteur - dy*(!hauteur_case/2))
-			  
-let dessine_etapes (n:int) : unit =
-  let bg = Graphics.background in
-  Graphics.set_color bg;
-  dessine_chaine 20 "Nombre d'etapes" (Some (string_of_int n)) (position_message 13 2);
-  Graphics.set_color Graphics.black
 
+(* dessine le nombre d'étapes que l'on a utilisé jusque-là *)
+let dessine_etapes (n:int) : unit =
+  dessine_chaine Graphics.background !taille_instr "Nombre d'etapes" (Some (string_of_int n)) (position_message 11 2)
+
+(* dessine les instructions du jeu dans la partie supérieure de la fenêtre*)
 let dessine_instructions () : unit =
-  let bg = Graphics.background in
-  Graphics.set_color bg;
-  dessine_chaine 20 "Un pas" (Some "'s'") (position_message 1 1);
-  dessine_chaine 20 "Tous les pas" (Some "'a'") (position_message 7 1);
-  dessine_chaine 20 "Sortir" (Some "'e'") (position_message 14 1);
-  Graphics.set_color Graphics.black
+  dessine_chaine Graphics.background !taille_instr "Un pas" (Some "'s'") (position_message 1 1);
+  dessine_chaine Graphics.background !taille_instr "Tous les pas" (Some "'a'") (position_message 7 1);
+  dessine_chaine Graphics.background !taille_instr "Sortir" (Some "'e'") (position_message 14 1)
 		     
 (* dessine le terrain, les etoiles et le robot *)
 let dessine_niveau (map:niveau) (n:int) : unit =
@@ -167,12 +175,9 @@ let coord_case (i:int) : (int*int) =
 
 (* dessine la i-eme case de la pile *)
 let dessine_case_pile (col:Graphics.color) (i:int) : unit =
-  Graphics.set_color col;
-  let x,y = coord_case i in
-  Graphics.fill_rect x y !largeur_case !hauteur_case;
-  Graphics.set_color Graphics.black;
-  Graphics.draw_rect x y !largeur_case !hauteur_case
+  dessine_rectangle col Graphics.black (coord_case i) (!largeur_case,!hauteur_case)
 
+(* TODO à améliorer *)
 (* dessine la i-eme commande de la pile *)
 let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
   if (i < pilemax) then
@@ -184,31 +189,31 @@ let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
 	match e with
 	| Programme.Avancer ->
 	   begin
-	     let x,y = decalage (x,y) (!largeur_case/2,!hauteur_case/5) in
+	     let x,y = Tools.decalage (x,y) (!largeur_case/2,!hauteur_case/5) in
 	     Graphics.moveto x y;
 	     Graphics.rlineto 0 (3*(!hauteur_case)/5);
 	     let centre = Graphics.current_point () in
-	     let gauche = decalage centre (-(!largeur_case/4),-(!hauteur_case/5)) in
-	     let droite = decalage centre (!largeur_case/4,-(!hauteur_case/5)) in
+	     let gauche = Tools.decalage centre (-(!largeur_case/4),-(!hauteur_case/5)) in
+	     let droite = Tools.decalage centre (!largeur_case/4,-(!hauteur_case/5)) in
 	     Graphics.draw_poly_line [|gauche; centre; droite|]
 	   end
 	| Programme.RotGauche ->
 	   begin
 	     (* centre de l'arc*)
-	     let xc,yc = decalage (x,y) (!largeur_case/5,!hauteur_case/5) in
-	     let centre = decalage (xc,yc) (0,2*(!hauteur_case)/5) in
-	     let bas = decalage centre (!largeur_case/5,-(!hauteur_case/5)) in
-	     let haut = decalage centre (!largeur_case/5,!hauteur_case/5) in
+	     let xc,yc = Tools.decalage (x,y) (!largeur_case/5,!hauteur_case/5) in
+	     let centre = Tools.decalage (xc,yc) (0,2*(!hauteur_case)/5) in
+	     let bas = Tools.decalage centre (!largeur_case/5,-(!hauteur_case/5)) in
+	     let haut = Tools.decalage centre (!largeur_case/5,!hauteur_case/5) in
 	     Graphics.draw_poly_line [|bas; centre; haut|];
 	     Graphics.draw_arc xc yc (3*(!largeur_case)/5) (2*(!hauteur_case/5)) 0 90
 	   end
 	| Programme.RotDroite ->
 	   begin
 	     (* centre de l'arc*)
-	     let xc,yc = decalage (x,y) (4*(!largeur_case)/5,!hauteur_case/5) in
-	     let centre = decalage (xc,yc) (0,2*(!hauteur_case)/5) in
-	     let bas = decalage centre (-(!largeur_case/5),-(!hauteur_case/5)) in
-	     let haut = decalage centre (-(!largeur_case/5),!hauteur_case/5) in
+	     let xc,yc = Tools.decalage (x,y) (4*(!largeur_case)/5,!hauteur_case/5) in
+	     let centre = Tools.decalage (xc,yc) (0,2*(!hauteur_case)/5) in
+	     let bas = Tools.decalage centre (-(!largeur_case/5),-(!hauteur_case/5)) in
+	     let haut = Tools.decalage centre (-(!largeur_case/5),!hauteur_case/5) in
 	     Graphics.draw_poly_line [|bas; centre; haut|];
 	     Graphics.draw_arc xc yc (3*(!largeur_case)/5) (2*(!hauteur_case/5)) 90 180
 	   end
@@ -216,15 +221,15 @@ let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
 	   begin
 	     Graphics.set_color (get_color col);
 	     (* centre du cercle *)
-	     let xc,yc = decalage (x,y) (!largeur_case/2,!hauteur_case/2) in
+	     let xc,yc = Tools.decalage (x,y) (!largeur_case/2,!hauteur_case/2) in
 	     Graphics.fill_circle xc yc ((min !largeur_case !hauteur_case)/4);
 	     Graphics.set_color Graphics.black;
 	     Graphics.draw_circle xc yc ((min !largeur_case !hauteur_case)/4)
 	   end
 	| Programme.Appel fonct ->
 	   begin
-	     Graphics.set_font "-*-fixed-medium-r-semicondensed--35-*-*-*-*-*-iso8859-1";
-	     let x,y = decalage (x,y) (!largeur_case/6,3*(!hauteur_case)/10) in
+	     set_font !taille_fonct;
+	     let x,y = Tools.decalage (x,y) (!largeur_case/6,3*(!hauteur_case)/10) in
 	     Graphics.moveto x y;
 	     Graphics.draw_string fonct
 	   end
@@ -242,18 +247,16 @@ let dessine_pile (pile:Programme.sequence) : unit =
 (* affiche la chaine "Defaite !" au centre de l'écran *)
 let perdu () : unit =
   let x,y = (2*(!largeur)/7),(4*(!hauteur)/9) in
-  Graphics.set_color Graphics.yellow;
-  Graphics.fill_rect (x-2) y (3*x/2) (2*y/9);
-  Graphics.set_color Graphics.red;
-  dessine_chaine 80 "GAME OVER" None (x,y)
+  dessine_rectangle Graphics.yellow Graphics.yellow (0,y) (!largeur,!taille_message);
+  dessine_chaine Graphics.red !taille_message "GAME OVER" None (x,y)
 
 (* affiche la chaine "Victoire ! " au centre de l'écran *)
 let gagne () : unit =
   let x,y = (5*(!largeur)/42),(4*(!hauteur)/9) in
-  Graphics.set_color (Graphics.rgb 245 222 179); (* beige *)
-  Graphics.fill_rect (x-9) y (32*x/5) (2*y/9);
-  Graphics.set_color (Graphics.rgb 60 179 113); (* mint green *)
-  dessine_chaine 80 "CONGRATULATIONS!" None (x,y)
+  let beige = Graphics.rgb 245 222 179 in
+  dessine_rectangle beige beige (0,y) (!largeur,!taille_message);
+  (* mint green *)
+  dessine_chaine (Graphics.rgb 60 179 113) !taille_message "CONGRATULATIONS!" None (x,y)  
 
 (*******************************************************)
 (* Création et initialisation de l'interface graphique *)
@@ -261,9 +264,8 @@ let gagne () : unit =
 
 (* efface l'écran *)
 let clear () : unit =
-  let fg = Graphics.foreground in
   Graphics.clear_graph ();
-  Graphics.set_color fg;
+  Graphics.set_color Graphics.foreground;
   Graphics.fill_rect 0 0 !largeur !hauteur
 
 (* initialisation *)
@@ -278,6 +280,9 @@ let init map (x,y) : unit =
   max_y := mm_y;
   largeur := x;
   hauteur := y;
+  taille_message:= !largeur / 10;
+  taille_instr := !largeur / 30;
+  taille_fonct := !largeur / 20;
   hauteur_haut := 25*y/100;
   hauteur_bas := !hauteur - !hauteur_haut;
   largeur_case := (!largeur) / (pilemax + 3);
