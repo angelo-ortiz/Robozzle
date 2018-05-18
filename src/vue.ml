@@ -177,10 +177,14 @@ let coord_case (i:int) : (int*int) =
 let dessine_case_pile (col:Graphics.color) (i:int) : unit =
   dessine_rectangle col Graphics.black (coord_case i) (!largeur_case,!hauteur_case)
 
-(* TODO à améliorer *)
 (* dessine la i-eme commande de la pile *)
 let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
-  if (i < pilemax) then
+  let dx,dy = !largeur_case/5,!hauteur_case/5 in
+  let dessine_fleche (pointe:int*int) (aux:int) : unit =
+    let gauche = Tools.decalage pointe ((if aux > 0 then 1 else -1)*dx,-dy) in
+    let droite = Tools.decalage pointe ((if aux < 0 then -1 else 1)*dx,(if aux = 0 then -1 else 1)*dy)
+    in Graphics.draw_poly_line [|gauche; pointe; droite|]
+  in if (i < pilemax) then
     begin
       let x,y = coord_case i in
       dessine_case_pile (get_color col) i;
@@ -192,29 +196,20 @@ let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
 	     let x,y = Tools.decalage (x,y) (!largeur_case/2,!hauteur_case/5) in
 	     Graphics.moveto x y;
 	     Graphics.rlineto 0 (3*(!hauteur_case)/5);
-	     let centre = Graphics.current_point () in
-	     let gauche = Tools.decalage centre (-(!largeur_case/4),-(!hauteur_case/5)) in
-	     let droite = Tools.decalage centre (!largeur_case/4,-(!hauteur_case/5)) in
-	     Graphics.draw_poly_line [|gauche; centre; droite|]
+	     dessine_fleche (Graphics.current_point ()) 0;
 	   end
 	| Programme.RotGauche ->
 	   begin
 	     (* centre de l'arc*)
-	     let xc,yc = Tools.decalage (x,y) (!largeur_case/5,!hauteur_case/5) in
-	     let centre = Tools.decalage (xc,yc) (0,2*(!hauteur_case)/5) in
-	     let bas = Tools.decalage centre (!largeur_case/5,-(!hauteur_case/5)) in
-	     let haut = Tools.decalage centre (!largeur_case/5,!hauteur_case/5) in
-	     Graphics.draw_poly_line [|bas; centre; haut|];
-	     Graphics.draw_arc xc yc (3*(!largeur_case)/5) (2*(!hauteur_case/5)) 0 90
+	     let xc,yc = Tools.decalage (x,y) (dx,dy) in
+	     dessine_fleche (Tools.decalage (xc,yc) (0,2*dy)) 1;
+	     Graphics.draw_arc xc yc (3*dx) (2*dy) 0 90
 	   end
 	| Programme.RotDroite ->
 	   begin
 	     (* centre de l'arc*)
 	     let xc,yc = Tools.decalage (x,y) (4*(!largeur_case)/5,!hauteur_case/5) in
-	     let centre = Tools.decalage (xc,yc) (0,2*(!hauteur_case)/5) in
-	     let bas = Tools.decalage centre (-(!largeur_case/5),-(!hauteur_case/5)) in
-	     let haut = Tools.decalage centre (-(!largeur_case/5),!hauteur_case/5) in
-	     Graphics.draw_poly_line [|bas; centre; haut|];
+	     dessine_fleche (Tools.decalage (xc,yc) (0,2*(!hauteur_case)/5)) (-1);
 	     Graphics.draw_arc xc yc (3*(!largeur_case)/5) (2*(!hauteur_case/5)) 90 180
 	   end
 	| Programme.Colorie col ->
