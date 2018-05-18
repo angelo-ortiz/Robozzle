@@ -193,9 +193,9 @@ let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
 	match e with
 	| Programme.Avancer ->
 	   begin
-	     let x,y = Tools.decalage (x,y) (!largeur_case/2,!hauteur_case/5) in
+	     let x,y = Tools.decalage (x,y) (!largeur_case/2,dy) in
 	     Graphics.moveto x y;
-	     Graphics.rlineto 0 (3*(!hauteur_case)/5);
+	     Graphics.rlineto 0 (3*dy);
 	     dessine_fleche (Graphics.current_point ()) 0;
 	   end
 	| Programme.RotGauche ->
@@ -208,9 +208,9 @@ let dessine_commande (i:int) ((col,e):Programme.commande) : unit =
 	| Programme.RotDroite ->
 	   begin
 	     (* centre de l'arc*)
-	     let xc,yc = Tools.decalage (x,y) (4*(!largeur_case)/5,!hauteur_case/5) in
-	     dessine_fleche (Tools.decalage (xc,yc) (0,2*(!hauteur_case)/5)) (-1);
-	     Graphics.draw_arc xc yc (3*(!largeur_case)/5) (2*(!hauteur_case/5)) 90 180
+	     let xc,yc = Tools.decalage (x,y) (4*dx,dy) in
+	     dessine_fleche (Tools.decalage (xc,yc) (0,2*dy)) (-1);
+	     Graphics.draw_arc xc yc (3*dx) (2*dy) 90 180
 	   end
 	| Programme.Colorie col ->
 	   begin
