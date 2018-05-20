@@ -97,27 +97,26 @@ let dessine_etoile (c:int*int) =
 
 (* calcule les sommets du robot selon son orientation *)
 let sommets_robot (dir:orientation) : (int*int) array =
+  let sommets = Array.make 4 (!case_x,!case_y) in
+  (* fait une opération préfixe sur deux couples par coordonnées *)
+  let op_couple op (x,y) (p,q) =
+    (op x p, op y q)
+  in
+  let ajuste_sommets mult div =
+    for i=0 to 3 do
+      sommets.(i) <- op_couple ( / ) (op_couple ( * ) mult.(i) sommets.(i)) div.(i);
+    done;
+    sommets
+  in
   match dir with
   | Haut ->
-     [|(!case_x/2, 4*(!case_y)/5);
-       (3*(!case_x)/4, !case_y/5);
-       (!case_x/2, 2*(!case_y)/5);
-       (!case_x/4, !case_y/5)|]
+     ajuste_sommets [|(1,4);(3,1);(1,2);(1,1)|] [|(2,5);(4,5);(2,5);(4,5)|]
   | Bas ->
-     [|(!case_x/2, !case_y/5);
-       (3*(!case_x)/4, 4*(!case_y)/5);
-       (!case_x/2, 3*(!case_y)/5);
-       (!case_x/4, 4*(!case_y)/5)|]
+     ajuste_sommets [|(1,1);(3,4);(1,3);(1,4)|] [|(2,5);(4,5);(2,5);(4,5)|]
   | Gauche ->
-     [|(!case_x/5, !case_y/2);
-       (4*(!case_x)/5, 3*(!case_y)/4);
-       (3*(!case_x)/5, !case_y/2);
-       (4*(!case_x)/5, !case_y/4)|]
+     ajuste_sommets [|(1,1);(4,3);(3,1);(4,1)|] [|(5,2);(5,4);(5,2);(5,4)|]
   | Droite ->
-     [|(4*(!case_x)/5, !case_y/2);
-       (!case_x/5, 3*(!case_y)/4);
-       (2*(!case_x)/5, !case_y/2);
-       (!case_x/5, !case_y/4)|]
+     ajuste_sommets [|(4,1);(1,3);(2,1);(1,1)|] [|(5,2);(5,4);(5,2);(5,4)|]
        
 (* dessine le robot *)
 let dessine_robot (t:etat_robot) : unit =
