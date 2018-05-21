@@ -68,7 +68,7 @@ let une_etape (prog:programme) (etat:niveau) (pile:sequence) (n:int) : niveau * 
 	     | RotGauche -> robot_gauche etat,suite,n
 	     | RotDroite -> robot_droite etat,suite,n
 	     | Colorie c -> (robot_colorie c etat),suite,n
-	     | Appel f -> etat,(trouve_fonction f prog)@suite,n
+	     | Appel f -> (enleve_etoile etat),(trouve_fonction f prog)@suite,n
 	   else etat,suite,n
 	 end
     end

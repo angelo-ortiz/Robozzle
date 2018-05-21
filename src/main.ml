@@ -1,19 +1,13 @@
 open Programme
 open Niveau
 
-(* x is in milliseconds *)       
-let sleep x =
-  let x = (float_of_int x) /. 1000. in
-  let x = string_of_float x in
-  ignore (Unix.system ("sleep "^x))
-
 let loop (map:niveau) (pgm:programme) : unit =
   let key_treatment (b: bool option) : bool option =
     match b with
     (* None : il faut exécuter tous les pas *)
     | None ->
        begin
-	 sleep 50;
+	 Tools.sleep 50;
 	 None
        end
     (* Some | true : il faut faire un seul pas *)

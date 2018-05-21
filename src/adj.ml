@@ -66,13 +66,12 @@ let bornes (m:'a matrix) : (int * int) * (int * int) =
     | [x] -> x
     | x::xs -> tail xs
   in
-  let update (j_min,j_max) (i,l) =
+  let update (i_max,(j_min,j_max)) (i,l) =
     let (jh,_) = head l in
     let (jt,_) = tail l in
-    (if (jh < j_min) then jh else j_min),
-    (if (jt > j_max) then jt else j_max)
+    i,((if (jh < j_min) then jh else j_min),
+       (if (jt > j_max) then jt else j_max))
   in
   let (i_min,_) = head m in
-  let (i_max,_) = tail m in
-  let j_bornes = List.fold_left (update) (max_int,-1) m in
+  let i_max,j_bornes = List.fold_left (update) (i_min,(max_int,-1)) m in
   (i_min,i_max),j_bornes

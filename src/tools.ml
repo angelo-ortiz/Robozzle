@@ -17,3 +17,10 @@ let implode (l:char list) : string =
 (* calcule le point obtenu à l'issue du décalage d'un point de base *)
 let decalage (x,y) (dx,dy) =
   (x+dx,y+dy)
+
+(* x is in milliseconds *)       
+let sleep x =
+  let x = (float_of_int x) /. 1000. in
+  let x = string_of_float x in
+  ignore (Unix.system ("sleep "^x))
+
