@@ -1,6 +1,14 @@
-Sorbonne Université
-Licence d'Informatique - Année 2017/18
+Sorbonne Université<br>
+Licence d'Informatique - Année 2017/18<br>
 Unité d'enseignement 2I008 - Fonctions et procédures de calcul
+
+Il s'agit d'une implémentation du jeu *Robozzle* en OCaml. Le projet a consisté
+à développer une interface graphique pour le jeu et un traitement automatique
+des solutions proposées : il n'est pas possible de transmettre les instructions
+à réaliser en cours d'exécution.
+
+**NB:** On nous avait fourni le parser des données et la structure de base 
+du projet réposant sur différents fichiers.
 
 J'ai ajouté un fichier **tools.ml** qui comporte des fonctions utilitaires. Il
 y en deux qui permettant de traiter une chaîne de caractères comme un liste de
